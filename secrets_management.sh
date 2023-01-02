@@ -2,6 +2,21 @@ export SECRETS_PRIVATE_KEY="$HOME/secrets.pem.private"
 export SECRETS_PUBLIC_KEY="$HOME/secrets.pem.public" 
 export SECRETS_BASE_DIR="$HOME/.config/local_secrets"
 
+secrets_management_install() {
+  local encrypt_key_path=$1
+
+  if [ ! -d "$SECRETS_BASE_DIR" ]; then
+    mkdir $HOME/.config
+    mkdir $SECRETS_BASE_DIR
+  fi
+
+  if [ ! -f "$SECRETS_PRIVATE_KEY" ]; then
+    cp $encrypt_key_path $SECRETS_PRIVATE_KEY
+    rm $SECRETS_PUBLIC_KEY
+    ssh-keygen -f $SECRETS_PRIVATE_KEY -y > $SECRETS_PUBLIC_KEY
+  fi
+}
+
 add_local_secret() {
   local key=$1
   local secret=$2
@@ -17,6 +32,7 @@ add_local_secret() {
     echo "secret value must not be empty"
     return 1
   fi
+  touch $target_secret_file
   echo $secret | openssl pkeyutl -encrypt -pubin -inkey $public_key > $target_secret_file
 }
 
